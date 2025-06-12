@@ -24,17 +24,22 @@ check_and_install python3
 check_and_install python3-pip
 check_and_install curl
 
-# نصب کتابخانه‌های پایتون در صورت نیاز
-install_python_package() {
-    PACKAGE=$1
-    python3 -c "import $PACKAGE" 2>/dev/null || pip3 install $PACKAGE
+# نصب یا آپدیت پکیج پایتون با نام متفاوت پکیج و ماژول
+install_python_package_with_pkgname() {
+    PKG_NAME=$1
+    MODULE_NAME=$2
+    python3 -c "import $MODULE_NAME" 2>/dev/null || pip3 install $PKG_NAME
 }
 
-# حذف پکیج اشتباه و نصب پکیج درست برای بات تلگرام
+# حذف پکیج اشتباه telegram (اگر نصب بود)
 pip3 uninstall -y telegram
+
+# نصب پکیج درست python-telegram-bot
 pip3 install -U python-telegram-bot
 
+# نصب apscheduler در صورت نیاز
 install_python_package apscheduler
+
 
 
 # اجرای اسکریپت اصلی
