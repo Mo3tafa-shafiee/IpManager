@@ -47,8 +47,8 @@ install_python_package apscheduler
 
 echo "All dependencies installed."
 
-# --- اجرای کد پایتون اصلی ---
-python3 <<EOF
+# ایجاد فایل bot.py برای اجرای بات تلگرام
+cat > bot.py << 'EOF'
 import os
 import json
 import datetime
@@ -102,3 +102,6 @@ def main():
 if __name__ == "__main__":
     main()
 EOF
+
+echo "Starting the bot..."
+python3 bot.py
