@@ -30,8 +30,12 @@ install_python_package() {
     python3 -c "import $PACKAGE" 2>/dev/null || pip3 install $PACKAGE
 }
 
-install_python_package telegram
+# حذف پکیج اشتباه و نصب پکیج درست برای بات تلگرام
+pip3 uninstall -y telegram
+pip3 install -U python-telegram-bot
+
 install_python_package apscheduler
+
 
 # اجرای اسکریپت اصلی
 python3 <<EOF
