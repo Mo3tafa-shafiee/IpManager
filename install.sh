@@ -1,68 +1,53 @@
 #!/bin/bash
 
-set -e
+clear
+echo "شروع نصب پیش‌نیازها..."
 
-echo "Updating system and installing dependencies..."
-apt update -y
-apt install -y python3 python3-pip curl
-
-echo "Installing python packages..."
-pip3 install --no-cache-dir flask python-telegram-bot requests schedule
-
-# دریافت توکن ربات و آیدی تلگرام ادمین
-read -p "Enter your bot token: " BOT_TOKEN
-read -p "Enter your Telegram numeric ID (Admin ID): " ADMIN_ID
-
-# ذخیره در config.py
-cat > config.py << EOF
-BOT_TOKEN = "$BOT_TOKEN"
-ADMIN_ID = $ADMIN_ID
-EOF
-
-# چک دانلود فایل main.py اگر موجود نبود
-if [ ! -f main.py ]; then
-    echo "Downloading main.py..."
-    curl -L -o main.py https://raw.githubusercontent.com/Mo3tafa-shafiee/IpManager/main.py
+# بررسی نصب بودن python3
+if ! command -v python3 &> /dev/null
+then
+    echo "Python3 نصب نیست. نصب در حال انجام..."
+    if [ -x "$(command -v apt)" ]; then
+        sudo apt update && sudo apt install -y python3 python3-venv python3-pip
+    elif [ -x "$(command -v yum)" ]; then
+        sudo yum install -y python3 python3-pip
+    else
+        echo "مدیر بسته مناسب پیدا نشد. لطفا به صورت دستی Python3 نصب کنید."
+        exit 1
+    fi
+else
+    echo "Python3 از قبل نصب است."
 fi
 
-# ایجاد سرویس systemd
-SERVICE_FILE="/etc/systemd/system/ipmanager.service"
-
-if systemctl is-active --quiet ipmanager.service; then
-    echo "Stopping existing service..."
-    systemctl stop ipmanager.service
+# بررسی نصب pip
+if ! command -v pip3 &> /dev/null
+then
+    echo "pip نصب نیست. نصب در حال انجام..."
+    if [ -x "$(command -v apt)" ]; then
+        sudo apt install -y python3-pip
+    elif [ -x "$(command -v yum)" ]; then
+        sudo yum install -y python3-pip
+    else
+        echo "pip نصب نشد. لطفا به صورت دستی نصب کنید."
+        exit 1
+    fi
+else
+    echo "pip از قبل نصب است."
 fi
 
-echo "Creating systemd service file..."
+# نصب پکیج‌های پایتون مورد نیاز
+echo "نصب پکیج‌های Python مورد نیاز..."
+pip3 install --upgrade pip
+pip3 install python-telegram-bot flask apscheduler requests
 
-cat > $SERVICE_FILE << EOF
-[Unit]
-Description=IP Manager Telegram Bot Service
-After=network.target
+# دسترسی اجرایی دادن به main.py
+chmod +x main.py
 
-[Service]
-Type=simple
-User=root
-WorkingDirectory=$(pwd)
-ExecStart=/usr/bin/python3 $(pwd)/main.py
-Restart=always
-RestartSec=10
+echo "پیش‌نیازها نصب شدند."
 
-[Install]
-WantedBy=multi-user.target
-EOF
+echo "برای اجرای ربات، دستور زیر را با مقدار توکن بات و آیدی ادمین اجرا کنید:"
+echo "python3 main.py <BOT_TOKEN> <ADMIN_CHAT_ID>"
+echo "مثال:"
+echo "python3 main.py 123456789:ABCdefGhIJKlmNoPQRstUvWXyz 123456789"
 
-echo "Reloading systemd daemon and enabling service..."
-systemctl daemon-reload
-systemctl enable ipmanager.service
-systemctl start ipmanager.service
-
-echo "Sending welcome message to admin..."
-
-python3 - << EOF
-import telegram
-bot = telegram.Bot(token="$BOT_TOKEN")
-bot.send_message(chat_id=$ADMIN_ID, text="Welcome to the License Management Bot!\nInstallation completed successfully.")
-EOF
-
-echo "Installation finished. Bot is running."
+echo "نصب کامل شد. موفق باشید!"
